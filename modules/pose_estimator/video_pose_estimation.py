@@ -4,14 +4,16 @@ import numpy as np
 
 from modules.models.human_segmentation import HumanSegmentation
 from modules.models.facial_landmarks import FacialLandmarksExtractor
+from modules.models.blink_detector import BlinkDetector
 
 from modules.receiver.video_processor import VideoProcessor
 
 
 class VideoPoseEstimator:
-    def __init__(self, open_port: str = '5555', ):
+    def __init__(self, shape_predictor_path: str, open_port: str = '5555'):
         self.video_processor = VideoProcessor(open_port=open_port)
 
+        self.blink_detector = BlinkDetector(shape_predictor_path=shape_predictor_path)
         self.human_segmentation_model = HumanSegmentation()
         self.facial_landmarks_extractor = FacialLandmarksExtractor()
 
@@ -36,3 +38,10 @@ class VideoPoseEstimator:
         facial_landmarks = self.facial_landmarks_extractor.extract_landmarks(image=frame)
 
         return facial_landmarks
+
+    def get_eye_blink(self) -> bool:
+        frame = self.__get_frame()
+
+        is_blink = self.blink_detector.detect_blink(image=frame)
+
+        return is_blink

@@ -2,7 +2,6 @@
 
 import threading
 
-import cv2
 import imagezmq
 
 
