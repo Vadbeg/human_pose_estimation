@@ -8,4 +8,4 @@ if __name__ == '__main__':
         grpc_url='localhost:9999'
     )
 
-    # handler.start()
+    handler.start()

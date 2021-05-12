@@ -83,21 +83,23 @@ if __name__ == '__main__':
 
     print(image_batch.size())
 
-    for i in tqdm(range(1000)):
-        res_facial_info = fa_model.get_landmarks(image_or_path=image)
+    res_facial_info = fa_model.get_landmarks(image_or_path=image)
 
-        # res_facial_info = fa_model.get_landmarks_from_batch(
-        #     image_batch=image_batch
-        # )
+    # res_facial_info = [res_facial_info[0][:17]]
+    # res_facial_info = [res_facial_info[0][17:22]]
+    # res_facial_info = [res_facial_info[0][22:27]]
+    # res_facial_info = [res_facial_info[0][36:42]]
+    # res_facial_info = [res_facial_info[0][42:48]]
+    res_facial_info = [res_facial_info[0][48:]]
 
-        print(res_facial_info)
+    print(res_facial_info)
 
-        # res_image = draw_facial_info(image=image, facial_info=res_facial_info)
+    res_image = draw_facial_info(image=image, facial_info=res_facial_info)
+    res_image = cv2.cvtColor(res_image, cv2.COLOR_BGR2RGB)
 
-        # res_image = cv2.cvtColor(res_image, cv2.COLOR_BGR2RGB)
+    cv2.imshow('Face', res_image)
+    cv2.waitKey(0)
 
-
-    # cv2.imshow('Face', res_image)
-    # cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 

@@ -5,7 +5,7 @@ import threading
 import cv2
 import grpc
 
-from modules.models.utils import transform_mask2rle
+from modules.models.utils import transform_mask2rle, get_annotated_facial_landmarks
 from modules.api.grpc_gen import health_pb2_grpc, health_pb2
 from modules.pose_estimator.video_pose_estimation import VideoPoseEstimator
 
@@ -22,25 +22,26 @@ class Handler:
         self.__thread_blink = self.__create_thread(
             function_to_execute=self.__send_blink
         )
-        # self.__thread_mask_landmarks = self.__create_thread(
-        #     function_to_execute=self.__send_mask_and_keypoints
-        # )
-        # self.__send_blink()
+        self.__thread_mask_landmarks = self.__create_thread(
+            function_to_execute=self.__send_mask_and_keypoints
+        )
 
-    #     self.__all_threads = [
-    #         self.__thread_blink,
-    #         self.__thread_mask_landmarks
-    #     ]
-    #
-    # def start(self):
-    #     for curr_thread in self.__all_threads:
-    #         curr_thread.start()
+        self.__all_threads = [
+            self.__thread_blink,
+            self.__thread_mask_landmarks
+        ]
+
+    def start(self):
+        for curr_thread in self.__all_threads:
+            curr_thread.start()
+
+        for curr_thread in self.__all_threads:
+            curr_thread.join()
 
     @staticmethod
     def __create_thread(function_to_execute):
         thread_video_stream = threading.Thread(target=function_to_execute)
         thread_video_stream.daemon = True
-        thread_video_stream.start()
 
         return thread_video_stream
 
@@ -56,15 +57,22 @@ class Handler:
             is_blinked = self.video_pose_estimator.get_eye_blink()
 
             if is_blinked:
-                print(f'User blinked!')
+                # print(f'User blinked!')
+                pass
 
     def __send_mask_and_keypoints(self):
         while True:
             human_mask = self.video_pose_estimator.get_human_segmentation()
             facial_landmarks = self.video_pose_estimator.get_facial_landmarks()
 
-            rle_human_mask = transform_mask2rle(image=human_mask)
+            rle_human_mask = transform_mask2rle(
+                image=human_mask
+            )
+            annotated_facial_landmarks = get_annotated_facial_landmarks(
+                landmarks=facial_landmarks
+            )
 
             print(rle_human_mask)
+            print(annotated_facial_landmarks)
 
 

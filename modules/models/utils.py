@@ -1,6 +1,6 @@
 """Module with utilities for model and usage of model results"""
 
-from typing import List, Tuple
+from typing import Dict, Tuple, List
 
 import numpy as np
 
@@ -40,4 +40,27 @@ def transform_rle2mask(rle_mask: np.ndarray, original_shape: Tuple[int, int]) ->
     return image
 
 
+def get_annotated_facial_landmarks(landmarks: np.ndarray) -> Dict[str, List[Tuple[float, float]]]:
+    landmarks = landmarks[0]
+    landmarks = [tuple(np.int16(curr_landmark)) for curr_landmark in landmarks]
+
+    face_contour = list(landmarks[:17])
+    left_eyebrow = list(landmarks[17:22])
+    right_eyebrow = list(landmarks[22:27])
+    nose = list(landmarks[27:36])
+    left_eye = list(landmarks[36:42])
+    right_eye = list(landmarks[42:48])
+    lips = list(landmarks[48:])
+
+    annotated_landmarks = {
+        'face_contour': face_contour,
+        'left_eyebrow': left_eyebrow,
+        'right_eyebrow': right_eyebrow,
+        'nose': nose,
+        'left_eye': left_eye,
+        'right_eye': right_eye,
+        'lips': lips,
+    }
+
+    return annotated_landmarks
 

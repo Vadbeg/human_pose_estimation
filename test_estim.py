@@ -41,6 +41,8 @@ if __name__ == '__main__':
     channel = grpc.insecure_channel(target='localhost:9999')
     stud = health_pb2_grpc.HealthStub(channel=channel)
 
+    asked = False
+
     while True:  # show streamed images until Ctrl-C
 
         image = video_pose_estimator.video_processor.receive_frame()
@@ -64,9 +66,20 @@ if __name__ == '__main__':
         #         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
         #     )
         rle_mask, original_shape = transform_mask2rle(image=human_mask)
+
+        if not asked:
+            rle_mask_text = map(lambda x: str(x), rle_mask.tolist())
+            rle_mask_text = ', '.join(rle_mask_text)
+
+            with open('file.txt', mode='a') as file:
+                file.writelines([rle_mask_text, f'\n{original_shape[0]}, {original_shape[1]}'])
+
+            asked = True
+
         human_mask = transform_rle2mask(rle_mask=rle_mask, original_shape=original_shape)
 
         image = draw_mask_on_image(image=image, mask=human_mask)
 
         cv2.imshow('Image', image)  # 1 window for each RPi
         cv2.waitKey(1)
+
