@@ -40,7 +40,7 @@ def transform_rle2mask(rle_mask: np.ndarray, original_shape: Tuple[int, int]) ->
     return image
 
 
-def get_annotated_facial_landmarks(landmarks: np.ndarray) -> Dict[str, List[Tuple[float, float]]]:
+def get_annotated_facial_landmarks(landmarks: np.ndarray) -> Dict[str, List[Tuple[int, int]]]:
     landmarks = landmarks[0]
     landmarks = [tuple(np.int16(curr_landmark)) for curr_landmark in landmarks]
 

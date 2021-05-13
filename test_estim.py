@@ -4,6 +4,7 @@ from modules.pose_estimator.video_pose_estimation import VideoPoseEstimator
 
 import cv2
 import grpc
+import numpy as np
 
 from scripts.face_alignment_testing import draw_facial_info
 from scripts.human_segmentation import (
@@ -12,7 +13,9 @@ from scripts.human_segmentation import (
     draw_mask_on_image
 )
 from modules.api.grpc_gen import health_pb2_grpc, health_pb2
-from modules.models.utils import transform_mask2rle, transform_rle2mask
+from modules.models.utils import transform_mask2rle, transform_rle2mask, get_annotated_facial_landmarks
+from modules.pose_estimator.shoulders_position import ShouldersPositionChecker
+from modules.pose_estimator.head_position import HeadPositionChecker
 
 
 def make_message():
@@ -36,6 +39,9 @@ if __name__ == '__main__':
         open_port='5554'
     )
 
+    shoulders_position_checker = ShouldersPositionChecker()
+    head_position_checker = HeadPositionChecker()
+
     time.sleep(1)
 
     channel = grpc.insecure_channel(target='localhost:9999')
@@ -46,8 +52,8 @@ if __name__ == '__main__':
     while True:  # show streamed images until Ctrl-C
 
         image = video_pose_estimator.video_processor.receive_frame()
-        human_mask = video_pose_estimator.get_human_segmentation()
-        # facial_landmarks = video_pose_estimator.get_facial_landmarks()
+        # human_mask = video_pose_estimator.get_human_segmentation()
+        facial_landmarks = video_pose_estimator.get_facial_landmarks()
         # is_blink = video_pose_estimator.get_eye_blink()
 
         # image = draw_facial_info(image=image, facial_info=facial_landmarks)
@@ -65,20 +71,27 @@ if __name__ == '__main__':
         #         image, 'Blink detected', (10, 30),
         #         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
         #     )
-        rle_mask, original_shape = transform_mask2rle(image=human_mask)
 
-        if not asked:
-            rle_mask_text = map(lambda x: str(x), rle_mask.tolist())
-            rle_mask_text = ', '.join(rle_mask_text)
+        # is_good_shoulders_pos = shoulders_position_checker.is_shoulders_position_good(
+        #     human_mask=human_mask,
+        #     facial_landmarks=facial_landmarks
+        # )
+        #
+        # image = cv2.putText(
+        #     image, f'Is good position: {is_good_shoulders_pos}', (10, 30),
+        #     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
+        # )
 
-            with open('file.txt', mode='a') as file:
-                file.writelines([rle_mask_text, f'\n{original_shape[0]}, {original_shape[1]}'])
+        is_good_head_pos = head_position_checker.is_head_position_good(facial_landmarks=facial_landmarks)
 
-            asked = True
+        image = cv2.putText(
+            image, f'Is good head pos: {is_good_head_pos}', (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
+        )
 
-        human_mask = transform_rle2mask(rle_mask=rle_mask, original_shape=original_shape)
+        # image = draw_facial_info(image=image, facial_info=facial_landmarks)
 
-        image = draw_mask_on_image(image=image, mask=human_mask)
+        # image = draw_mask_on_image(image=image, mask=human_mask)
 
         cv2.imshow('Image', image)  # 1 window for each RPi
         cv2.waitKey(1)

@@ -90,7 +90,10 @@ if __name__ == '__main__':
     # res_facial_info = [res_facial_info[0][22:27]]
     # res_facial_info = [res_facial_info[0][36:42]]
     # res_facial_info = [res_facial_info[0][42:48]]
-    res_facial_info = [res_facial_info[0][48:]]
+    # res_facial_info = [res_facial_info[0][48:]]
+    # res_facial_info = [res_facial_info[0][27:36]]
+    # res_facial_info = [res_facial_info[0][27:28]]
+    res_facial_info = [res_facial_info[0][30:36]]
 
     print(res_facial_info)
 
