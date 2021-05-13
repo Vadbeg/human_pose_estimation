@@ -3,10 +3,8 @@
 import time
 import threading
 
-import cv2
 import grpc
 
-from modules.models.utils import transform_mask2rle, get_annotated_facial_landmarks
 from modules.api.grpc_gen import health_pb2_grpc, health_pb2
 from modules.pose_estimator.video_pose_estimation import VideoPoseEstimator
 
@@ -62,7 +60,7 @@ class Handler:
             time.sleep(0.05)
 
             is_blink = self.video_pose_estimator.check_eye_blink()
-            is_face_recognized = is_blink is None
+            is_face_recognized = not (is_blink is None)
 
             if is_blink or not is_face_recognized:
                 blinked_msg = health_pb2.Blinked(
@@ -75,14 +73,12 @@ class Handler:
     def __create_shoulders_position_msg(self):
         while True:
             is_good_shoulder_position = self.video_pose_estimator.check_shoulders_position()
-            is_face_recognized = is_good_shoulder_position is None
+            is_face_recognized = not (is_good_shoulder_position is None)
 
             shoulder_pos_change_msg = health_pb2.ShouldersPositionChangeMsg(
                 isCrooked=is_good_shoulder_position,
                 isFaceRecognized=is_face_recognized
             )
-
-            print('is_good_shoulder_position ', is_good_shoulder_position)
 
             yield shoulder_pos_change_msg
 
@@ -91,14 +87,12 @@ class Handler:
             time.sleep(0.05)
 
             is_good_head_position = self.video_pose_estimator.check_head_position()
-            is_face_recognized = is_good_head_position is None
+            is_face_recognized = not (is_good_head_position is None)
 
             nose_pos_change_msg = health_pb2.NosePositionChangeMsg(
                 isCrooked=is_good_head_position,
                 isFaceRecognized=is_face_recognized
             )
-
-            print('nose_pos_change_msg ', is_good_head_position)
 
             yield nose_pos_change_msg
 

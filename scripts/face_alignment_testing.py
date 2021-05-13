@@ -7,7 +7,6 @@ import torch
 import numpy as np
 import face_alignment
 from cv2 import cv2
-from tqdm import tqdm
 
 
 def read_image(image_path: str) -> np.ndarray:
