@@ -1,6 +1,8 @@
 """Model for blink detection"""
 
 
+from typing import Optional
+
 import cv2
 import dlib
 import imutils
@@ -32,7 +34,7 @@ class BlinkDetector:
 
         return ear
 
-    def detect_blink(self, image: np.ndarray) -> bool:
+    def detect_blink(self, image: np.ndarray) -> Optional[bool]:
         image = imutils.resize(image, width=450)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -51,6 +53,9 @@ class BlinkDetector:
 
             if ear < self.__threshold:
                 return True
+
+        if len(rects) == 0:
+            return None
 
         return False
 

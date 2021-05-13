@@ -1,5 +1,6 @@
 """Module for handling video stream and sending responses to server"""
 
+import time
 import threading
 
 import cv2
@@ -17,18 +18,22 @@ class Handler:
             open_port=open_port
         )
 
-        stub = self.__create_stud(grpc_url=grpc_url)
+        self.stub = self.__create_stub(grpc_url=grpc_url)
 
         self.__thread_blink = self.__create_thread(
             function_to_execute=self.__send_blink
         )
-        self.__thread_mask_landmarks = self.__create_thread(
-            function_to_execute=self.__send_mask_and_keypoints
+        self.__thread_shoulders = self.__create_thread(
+            function_to_execute=self.__send_shoulders_position
+        )
+        self.__thread_head = self.__create_thread(
+            function_to_execute=self.__send_head_position
         )
 
         self.__all_threads = [
             self.__thread_blink,
-            self.__thread_mask_landmarks
+            self.__thread_shoulders,
+            self.__thread_head
         ]
 
     def start(self):
@@ -46,33 +51,68 @@ class Handler:
         return thread_video_stream
 
     @staticmethod
-    def __create_stud(grpc_url):
+    def __create_stub(grpc_url):
         channel = grpc.insecure_channel(target=grpc_url)
         stub = health_pb2_grpc.HealthStub(channel=channel)
 
         return stub
 
+    def __create_blink_msg(self):
+        while True:
+            time.sleep(0.05)
+
+            is_blink = self.video_pose_estimator.check_eye_blink()
+            is_face_recognized = is_blink is None
+
+            if is_blink or not is_face_recognized:
+                blinked_msg = health_pb2.Blinked(
+                    amount=1,
+                    isFaceRecognized=is_face_recognized
+                )
+
+                yield blinked_msg
+
+    def __create_shoulders_position_msg(self):
+        while True:
+            is_good_shoulder_position = self.video_pose_estimator.check_shoulders_position()
+            is_face_recognized = is_good_shoulder_position is None
+
+            shoulder_pos_change_msg = health_pb2.ShouldersPositionChangeMsg(
+                isCrooked=is_good_shoulder_position,
+                isFaceRecognized=is_face_recognized
+            )
+
+            print('is_good_shoulder_position ', is_good_shoulder_position)
+
+            yield shoulder_pos_change_msg
+
+    def __create_head_position_msg(self):
+        while True:
+            time.sleep(0.05)
+
+            is_good_head_position = self.video_pose_estimator.check_head_position()
+            is_face_recognized = is_good_head_position is None
+
+            nose_pos_change_msg = health_pb2.NosePositionChangeMsg(
+                isCrooked=is_good_head_position,
+                isFaceRecognized=is_face_recognized
+            )
+
+            print('nose_pos_change_msg ', is_good_head_position)
+
+            yield nose_pos_change_msg
+
     def __send_blink(self):
-        while True:
-            is_blinked = self.video_pose_estimator.get_eye_blink()
+        self.stub.UserBlinked(self.__create_blink_msg())
 
-            if is_blinked:
-                # print(f'User blinked!')
-                pass
+    def __send_shoulders_position(self):
+        self.stub.ShouldersPositionChange(self.__create_shoulders_position_msg())
 
-    def __send_mask_and_keypoints(self):
-        while True:
-            human_mask = self.video_pose_estimator.get_human_segmentation()
-            facial_landmarks = self.video_pose_estimator.get_facial_landmarks()
+    def __send_head_position(self):
+        self.stub.NosePositionChange(self.__create_head_position_msg())
 
-            rle_human_mask = transform_mask2rle(
-                image=human_mask
-            )
-            annotated_facial_landmarks = get_annotated_facial_landmarks(
-                landmarks=facial_landmarks
-            )
 
-            print(rle_human_mask)
-            print(annotated_facial_landmarks)
+
+
 
 
