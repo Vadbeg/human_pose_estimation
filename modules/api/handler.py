@@ -72,25 +72,35 @@ class Handler:
 
     def __create_shoulders_position_msg(self):
         while True:
-            is_good_shoulder_position = self.video_pose_estimator.check_shoulders_position()
-            is_face_recognized = not (is_good_shoulder_position is None)
+            try:
 
-            shoulder_pos_change_msg = health_pb2.ShouldersPositionChangeMsg(
-                isCrooked=is_good_shoulder_position,
-                isFaceRecognized=is_face_recognized
-            )
+                is_good_shoulder_position = self.video_pose_estimator.check_shoulders_position()
+                is_face_recognized = not (is_good_shoulder_position is None)
 
-            yield shoulder_pos_change_msg
+                if is_good_shoulder_position is None:
+                    is_good_shoulder_position = False
+
+                shoulder_pos_change_msg = health_pb2.ShouldersPositionChangeMsg(
+                    isCrooked=not is_good_shoulder_position,
+                    isFaceRecognized=is_face_recognized
+                )
+
+                yield shoulder_pos_change_msg
+            except Exception as exc:
+                print(exc)
 
     def __create_head_position_msg(self):
         while True:
-            time.sleep(0.05)
+            time.sleep(0.5)
 
             is_good_head_position = self.video_pose_estimator.check_head_position()
             is_face_recognized = not (is_good_head_position is None)
 
+            if is_good_head_position is None:
+                is_good_head_position = False
+
             nose_pos_change_msg = health_pb2.NosePositionChangeMsg(
-                isCrooked=is_good_head_position,
+                isCrooked=not is_good_head_position,
                 isFaceRecognized=is_face_recognized
             )
 

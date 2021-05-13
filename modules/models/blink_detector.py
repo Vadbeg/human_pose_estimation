@@ -14,7 +14,7 @@ import scipy.spatial
 class BlinkDetector:
     def __init__(
             self, shape_predictor_path: str,
-            threshold: float = 0.23,
+            threshold: float = 0.21,
             consecutive_frames_num: int = 5,
     ):
         self.__detector = dlib.get_frontal_face_detector()
